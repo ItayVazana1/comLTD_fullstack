@@ -1,0 +1,37 @@
+
+
+services:
+  backend:
+    build:
+      context: ./BackendApp
+    command: ["/usr/local/bin/wait-for-it.sh", "mysql-container:3306", "--", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "10000"]
+    ports:
+      - "10000:10000"
+    env_file:
+      - ./BackendApp/.env
+    depends_on:
+      - mysql
+    networks:
+      - mybackend-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-container
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: CELLvaz834!
+      MYSQL_DATABASE: com_ltd
+      MYSQL_USER: backendU
+      MYSQL_PASSWORD: CELLvaz834!
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mybackend-network
+
+networks:
+  mybackend-network:
+
+volumes:
+  mysql_data:
+    driver: local
