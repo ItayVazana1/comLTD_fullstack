@@ -7,6 +7,7 @@ from .routes.packages import router as packages_router
 from .routes.customers import router as customers_router
 from .routes.audit_logs import router as audit_logs_router
 from .routes.landing_page import router as landing_page_router
+from .routes.contact_us import router as contact_us_router
 from .utils.loguru_config import logger
 from loguru import logger as llog
 
@@ -24,7 +25,7 @@ def create_application() -> FastAPI:
     application.include_router(customers_router, prefix="/customers", tags=["Customers"])
     application.include_router(audit_logs_router, prefix="/audit-logs", tags=["Audit Logs"])
     application.include_router(landing_page_router, tags=["Landing Pages"])
-
+    application.include_router(contact_us_router, tags=["Contact Us"])
     logger.info("Routes registered successfully.")
     llog.info("This is a test log for Loguru!")
     return application

@@ -1,10 +1,11 @@
 import os
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from ..models.database import get_db
 from ..models.tables import AuditLog
 from ..utils.loguru_config import logger
+from ..utils.email import send_email
 
 router = APIRouter()
 
@@ -27,6 +28,7 @@ def landing_page():
             <div class="d-grid gap-2 d-md-flex justify-content-center">
                 <button class="btn btn-primary me-md-2" onclick="location.href='/docs'">Documentation</button>
                 <button class="btn btn-secondary" onclick="location.href='/audit-logs-view'">Logs</button>
+                <button class="btn btn-success" onclick="location.href='/test-email'">Test Email</button>
             </div>
         </div>
     </body>
@@ -34,6 +36,54 @@ def landing_page():
     """
     return HTMLResponse(content=html_content)
 
+@router.get("/test-email", response_class=HTMLResponse)
+def test_email_page():
+    """
+    Render a page to test email sending functionality.
+    """
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Test Email</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    </head>
+    <body class="bg-dark text-light">
+        <div class="container mt-5">
+            <h1 class="text-center mb-4">Send Test Email</h1>
+            <form method="post" action="/send-test-email" class="bg-secondary p-4 rounded">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Send Test Email</button>
+                </div>
+            </form>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+@router.post("/send-test-email")
+def send_test_email(email: str = Form(...)):
+    """
+    Handle test email sending.
+    :param email: Email address to send the test email to.
+    """
+    try:
+        send_email(
+            recipient=[email],
+            subject="Test Email",
+            body=f"This is a test email sent on {os.getenv('TIMEZONE', 'UTC')} time."
+        )
+        logger.info(f"Test email sent to {email}")
+        return HTMLResponse(content=f"<h1>Test email successfully sent to {email}!</h1>")
+    except Exception as e:
+        logger.error(f"Failed to send test email to {email}: {e}")
+        return HTMLResponse(content=f"<h1>Failed to send email to {email}. Check logs for details.</h1>")
 
 @router.get("/audit-logs-view", response_class=HTMLResponse)
 def audit_logs_view():
@@ -100,7 +150,6 @@ def audit_logs_view():
     </html>
     """
     return HTMLResponse(content=html_content)
-
 
 @router.get("/audit-logs-view-filter")
 def get_audit_logs(user_id: str = None, db: Session = Depends(get_db)):
